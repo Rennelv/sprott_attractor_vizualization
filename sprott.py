@@ -6,14 +6,14 @@ from matplotlib.widgets import Button, TextBox
 import subprocess
 
 def load_and_plot_data(event=None):
-    # Загрузка данных, записанных методом RK4 (4 колонки: t, x, y, z)
+    # Загрузка данных RK4 (4 колонки: t, x, y, z)
     rk4_data = np.loadtxt('sprott_rk4.txt', usecols=(0, 1, 2, 3))
     t_rk4 = rk4_data[:, 0]
     x_rk4 = rk4_data[:, 1]
     y_rk4 = rk4_data[:, 2]
     z_rk4 = rk4_data[:, 3]
 
-    # Загрузка данных, записанных методом dopri5 с адаптивным шагом (6 колонок: t, x, y, z, локальная ошибка, dt)
+    # Загрузка данных dopri5 с адаптивным шагом (6 колонок: t, x, y, z, локальная ошибка, dt)
     dopri5_data = np.loadtxt('sprott_dopri5_adaptive.txt', usecols=(0, 1, 2, 3, 4, 5))
     t_dopri5_a = dopri5_data[:, 0]
     x_dopri5_a = dopri5_data[:, 1]
@@ -97,11 +97,6 @@ ax = fig.add_subplot(1, 4, (1,2), projection='3d')
 ax2 = fig.add_subplot(2, 4, (3, 4))
 ax3 = fig.add_subplot(247)
 ax4 = fig.add_subplot(248)
-
-# Кнопка обновления данных
-ax_button = plt.axes([0.45, 0.01, 0.15, 0.05])
-button = Button(ax_button, 'Обновить данные')
-button.on_clicked(load_and_plot_data)
 
 # Текстовое поле для ввода аргумента
 ax_text_box = plt.axes([0.25, 0.01, 0.15, 0.05])
