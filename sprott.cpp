@@ -1,4 +1,4 @@
-#include <algorithm>  // для std::max
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
@@ -7,7 +7,7 @@
 #include <string>
 #include <sstream>
 
-// Структура для хранения состояния системы
+// Структура состояния системы
 struct State {
     double x, y, z;
 
@@ -44,11 +44,10 @@ void rk4(double T, double dt, State s, double t_start = 0.0, std::string save_fi
 
     std::ofstream fout(save_file);
     if (!fout) {
-        std::cerr << "Ошибка открытия файла для записи\n";
         throw std::runtime_error("Ошибка открытия файла для записи");
     }
 
-    // Используем строковый поток для кэширования данных
+    // Строковый поток для кэширования данных
     std::ostringstream buffer;
 
     // Записываем начальное состояние
@@ -76,12 +75,11 @@ void rk4(double T, double dt, State s, double t_start = 0.0, std::string save_fi
 void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::string save_file = "sprott_dopri5_adaptive.txt") {
     double t = 0.0;       // начальное время
     double tol = 1e-6;    // допустимый локальный шаговой допуск
-    double safety = 0.9;  // коэффициент безопасности для изменения шага
-    double p = 5.0;       // порядок метода для оценки (экспонента = 1/5)
+    double safety = 0.9;  // коэффициент для изменения шага
+    double p = 5.0;       // порядок метода для оценки (экспонента = 1/5) (4(порядок оценки ошибки) + 1)
 
     std::ofstream fout(save_file);
     if (!fout) {
-        std::cerr << "Ошибка открытия файла для записи\n";
         throw std::runtime_error("Ошибка открытия файла для записи");
     }
 
@@ -93,7 +91,7 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
 
     // Основной цикл интегрирования
     while (t < T) {
-        // Если следующий шаг выходит за T корректируем dt
+        // Если следующий шаг выходит за T корректируем dt (считаем последнюю точку)
         if (t + dt > T) {
             dt = T - t;
         }
@@ -103,7 +101,7 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
 
         // Повторяем попытки шага, пока ошибка не удовлетворит допуск
         while (!stepAccepted) {
-            // Вычисляем 7 стадий метода Dormand–Prince:
+            // 7 стадий метода dopri5:
             State k1 = f(s) * dt;
             State k2 = f(s + k1 * (1.0 / 5.0)) * dt;
             State k3 = f(s + k1 * (3.0 / 40.0) + k2 * (9.0 / 40.0)) * dt;
@@ -113,10 +111,10 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
             // Седьмая стадия используется для оценки 4‑порядкового решения
             State k7 = f(s + k1 * (35.0 / 384.0) + k3 * (500.0 / 1113.0) + k4 * (125.0 / 192.0) - k5 * (2187.0 / 6784.0) + k6 * (11.0 / 84.0)) * dt;
 
-            // Вычисляем 5‑порядковое решение (принимаемое)
+            // 5‑порядковое решение (принимаемое)
             State s5 = s + k1 * (35.0 / 384.0) + k3 * (500.0 / 1113.0) + k4 * (125.0 / 192.0) - k5 * (2187.0 / 6784.0) + k6 * (11.0 / 84.0);
 
-            // Вычисляем 4‑порядковое решение для оценки ошибки
+            // 4‑порядковое решение для оценки ошибки
             State s4 = s + k1 * (5179.0 / 57600.0) + k3 * (7571.0 / 16695.0) + k4 * (393.0 / 640.0) - k5 * (92097.0 / 339200.0) + k6 * (187.0 / 2100.0) +
                        k7 * (1.0 / 40.0);
 
@@ -125,7 +123,9 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
             double err = std::max({std::fabs(error.x), std::fabs(error.y), std::fabs(error.z)});
 
             // Расчёт нового шага dt_new на основе ошибки
+            // https://scicomp.stackexchange.com/questions/32563/dormand-prince-54-how-to-update-the-stepsize-and-make-accept-reject-decision
             dt_new = dt * safety * std::pow(tol / (err + 1e-10), 1.0 / p);
+            // dt_new = dt * safety * std::pow(1 / (err), 1.0 / p);
 
             // Если ошибка удовлетворяет допуск, шаг принимается
             if (err <= tol) {
@@ -140,7 +140,7 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
         }
         // Обновляем шаг для следующей итерации
         dt = dt_new;
-        // Дополнительные ограничения на диапазон dt (при необходимости)
+        // ограничения на диапазон dt 
         if (dt < 1e-10) dt = 1e-10;
         if (dt > 0.1) dt = 0.1;
     }
@@ -153,10 +153,8 @@ int main(int argc, char *argv[]) {
     double T = 1000.0;  // конечное время
     double dt = 0.01;   // начальный шаг интегрирования
     double t_start = 0.0;
-    std::string save_file_rk4 = "sprott_rk4.txt";
-    std::string save_file_dopri5 = "sprott_dopri5_adaptive.txt";
 
-    // Начальные условия
+    // начальные условия
     State s{0.63, 0.47, -0.54};
 
     // T
@@ -184,13 +182,14 @@ int main(int argc, char *argv[]) {
     std::cout << "Время моделирования: " << T << "\n";
 
     auto start = std::clock();
-    rk4(T, dt, s, t_start, save_file_rk4);
+    rk4(T, dt, s, t_start);
     auto end = std::clock();
     std::cout << "Время выполнения метода RK4: " << double(end - start) / CLOCKS_PER_SEC << " секунд\n";
 
     start = std::clock();
-    dopri5_adaptive(T, dt, s, t_start, save_file_dopri5);
+    dopri5_adaptive(T, dt, s, t_start);
     end = std::clock();
     std::cout << "Время выполнения метода Dopri5: " << double(end - start) / CLOCKS_PER_SEC << " секунд\n";
+
     return 0;
 }
