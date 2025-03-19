@@ -101,7 +101,7 @@ void dopri5_adaptive(double T, double dt, State s, double t_start = 0.0, std::st
 
         // Повторяем попытки шага, пока ошибка не удовлетворит допуск
         while (!stepAccepted) {
-            // Вычисляем 7 стадий метода dopri5:
+            // 7 стадий метода dopri5:
             State k1 = f(s) * dt;
             State k2 = f(s + k1 * (1.0 / 5.0)) * dt;
             State k3 = f(s + k1 * (3.0 / 40.0) + k2 * (9.0 / 40.0)) * dt;
